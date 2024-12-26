@@ -1,4 +1,4 @@
-// api/getAction.go
+// api/getGoDependency.go
 package handler
 
 import (
@@ -12,30 +12,29 @@ import (
 	"strings"
 )
 
-func GetAction(w http.ResponseWriter, r *http.Request) {
+func GetGoDependency(w http.ResponseWriter, r *http.Request) {
 	// Získání parametrů z URL
-	owner := r.URL.Query().Get("owner")
-	repo := r.URL.Query().Get("repo")
 	repository := r.URL.Query().Get("repository")
 
-	if owner == "" || repo == "" {
-		if repository == "" {
-			http.Error(w, "Missing 'owner' or 'repo' query parameter", http.StatusBadRequest)
+	owner := "gouef"
+	repo := "github-repo-usages"
+
+	if repository == "" {
+		http.Error(w, "Missing 'owner' or 'repo' query parameter", http.StatusBadRequest)
+		return
+	} else {
+		// Rozdělení 'repository' na owner a repo
+		parts := strings.Split(repository, "/")
+		if len(parts) != 2 {
+			http.Error(w, "Invalid 'repository' format. Expected 'owner/repo'", http.StatusBadRequest)
 			return
-		} else {
-			// Rozdělení 'repository' na owner a repo
-			parts := strings.Split(repository, "/")
-			if len(parts) != 2 {
-				http.Error(w, "Invalid 'repository' format. Expected 'owner/repo'", http.StatusBadRequest)
-				return
-			}
-			owner = parts[0]
-			repo = parts[1]
 		}
+		owner = parts[0]
+		repo = parts[1]
 	}
 
 	// URL pro GitHub API (získání počtu běhů akcí pro daný repozitář)
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/actions/runs", owner, repo)
+	url := fmt.Sprintf("https://api.github.com/search-code?q=path:**/go.mod %s/%s", owner, repo)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -91,12 +90,4 @@ func GetAction(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
-}
-
-func main() {
-	// Tento handler bude obsluhovat všechny požadavky na /api/get-action
-	http.HandleFunc("/api/get-action", GetAction)
-	http.HandleFunc("/api/get-go-dependency", GetGoDependency)
-	http.HandleFunc("/", GetAction)
-	log.Fatal(http.ListenAndServe(":3000", nil))
 }
