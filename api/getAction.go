@@ -92,11 +92,3 @@ func GetAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
-
-func main() {
-	// Tento handler bude obsluhovat všechny požadavky na /api/get-action
-	http.HandleFunc("/api/get-action", GetAction)
-	http.HandleFunc("/api/get-go-dependency", GetGoDependency)
-	http.HandleFunc("/", GetAction)
-	log.Fatal(http.ListenAndServe(":3000", nil))
-}
